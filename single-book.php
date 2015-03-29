@@ -114,9 +114,11 @@ function mbdb_shortcode_published($attr, $content) {
 		return apply_filters('mbdb_shortcode_published',  '<span class="mbm-book-published"><span class="mbm-book-published-blank">' . esc_html($attr['blank']) . '</span></span>');
 	}
 	if ($attr['format'] =='short') {
-		$format = 'm/d/Y';
+		/* translators: short date format. see http://php.net/date */
+		$format = __('m/d/Y');
 	} else {
-		$format = 'F j, Y';
+		/* translators: long date format. see http://php.net/date */
+		$format = __('F j, Y');
 	}
 	$mbdb_published = get_post_meta( $bookID, '_mbdb_published', true );
 	if ( empty( $mbdb_published ) ) { 
@@ -126,7 +128,7 @@ function mbdb_shortcode_published($attr, $content) {
 }
 
 function mbdb_shortcode_goodreads($attr, $content) {
-	$attr = shortcode_atts(array('text' => 'View on Goodreads',
+	$attr = shortcode_atts(array('text' => __('View on Goodreads', 'mooberry-book-manager'),
 								'label' => '',
 								'after' => '',
 								'blank' => '',
@@ -250,9 +252,9 @@ function mbdb_shortcode_taxonomy($attr, $taxonomy, $permalink) {
 
 function mbdb_shortcode_serieslist($attr, $content) {
 	$attr = shortcode_atts(array('blank' => '',
-									'before' => 'Part of the ',
-									'after' => ' series:',
-									'delim' => 'list',
+									'before' => __('Part of the ', 'mooberry-book-manager'),
+									'after' => __(' series:', 'mooberry-book-manager'),
+									'delim' => __('list', 'mooberry-book-manager'),
 									'book' => ''), $attr);
 	
 	$bookID = mbdb_get_book_ID( $attr['book'] );
