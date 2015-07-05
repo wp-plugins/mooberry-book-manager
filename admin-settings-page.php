@@ -13,11 +13,19 @@ if ( $pagenow == 'options-general.php' && $_GET['page'] == 'mbdb_settings' ) {
     if ( isset ( $_GET['tab'] ) ) {
         $tab = $_GET['tab'];
     } else {
-        $tab = 'retailers';
+        $tab = 'general';
     }
 	mbdb_admin_tabs($tab);
 	do_action('mbdb_settings_before_tab_display', $tab);
     switch ( $tab ) {
+		case 'general':
+			$fields = mbdb_general_settings();
+			mbdb_meta_fields($fields);
+			break;
+		case 'publishers':
+			$fields = mbdb_publishers();
+			mbdb_meta_fields($fields);
+			break;
 		case 'retailers' :
            $fields =  mbdb_retailers();
 		   mbdb_meta_fields($fields);
@@ -29,8 +37,157 @@ if ( $pagenow == 'options-general.php' && $_GET['page'] == 'mbdb_settings' ) {
 		// case 'output':
 		// mbdb_print_book_list();
 			// break;
+		case 'editions' :
+			$fields = mbdb_editions();
+			mbdb_meta_fields($fields);
+			break;
 	}
 	do_action('mbdb_settings_after_tab_display', $tab);
+}
+
+function mbdb_publishers() {
+	return apply_filters('mbdb_settings_publishers_settings', array(
+				array(
+					'id'          => 'publishers',
+					'type'        => 'group',
+					'desc'			=>	__('Add your publishers.', 'mooberry-book-manager'),
+					'options'     => array(
+						'group_title'   => __('Publisher', 'mooberry-book-manager') . ' {#}',  // since version 1.1.4, {#} gets replaced by row number
+						'add_button'    =>  __('Add New Publisher', 'mooberry-book-manager'),
+						'remove_button' =>  __('Remove Publisher', 'mooberry-book-manager') ,
+						'sortable'      => false, // beta
+					),
+					// Fields array works the same, except id's only need to be unique for this group. Prefix is not needed.
+					'fields'      => array(
+							array(
+								'name' => __('Publisher', 'mooberry-book-manager'),
+								'id'   => 'name',
+								'type' => 'text_medium',
+								'attributes' => array(
+									'required' => 'required',
+								),
+							),
+							array(
+								'name' 	=> __('Publisher Website', 'mooberry-book-manager'),
+								'id'	=> 'website',
+								'type'	=> 'text_url',
+								'desc' => 'http://www.someWebsite.com/',
+								'attributes' =>  array(
+									//'pattern' => '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})\/?([\/\w \.=\?&\-%]*)*\/?',
+									'pattern' => '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6}).*',
+									
+								),
+							),
+							array(
+							'id' => 'uniqueID',
+							'type' => 'text',
+							'show_names' => false,
+							'sanitization_cb' => 'mbdb_uniqueID_generator',
+							'attributes' => array(
+								'type' => 'hidden',
+								),
+							),
+						),
+					),
+				)
+			);
+}
+
+function mbdb_editions() {
+	return apply_filters('mbdb_settings_editions_settings', array(
+				array(
+					'id'          => 'editions',
+					'type'        => 'group',
+					'desc'			=>	__('Add any additional formats your books are available in.', 'mooberry-book-manager'),
+					'options'     => array(
+						'group_title'   => __('Format', 'mooberry-book-manager') . ' {#}',  // since version 1.1.4, {#} gets replaced by row number
+						'add_button'    =>  __('Add New Format', 'mooberry-book-manager'),
+						'remove_button' =>  __('Remove Format', 'mooberry-book-manager') ,
+						'sortable'      => false, // beta
+					),
+					// Fields array works the same, except id's only need to be unique for this group. Prefix is not needed.
+					'fields'      => array(
+						array(
+							'name' => __('Format Name', 'mooberry-book-manager'),
+							'id'   => 'name',
+							'type' => 'text_medium',
+							'attributes' => array(
+								'required' => 'required',
+							),
+							
+						),
+						array(
+							'id' => 'uniqueID',
+							'type' => 'text',
+							'show_names' => false,
+							'sanitization_cb' => 'mbdb_uniqueID_generator',
+							'attributes' => array(
+								'type' => 'hidden',
+								),
+						),
+					),
+				),
+			)
+		);
+}
+
+function mbdb_general_settings() {
+	return apply_filters('mbdb_settings_general_settings', array(
+				array(
+					'id'	=> 'mbdb_book_default_settings_title',
+					'name'	=>	__('BOOK PAGE DEFAULT SETTINGS', 'mooberry-book-manager'),
+					'type'	=>	'title',
+				),array(
+					'id'	=>	'mbdb_default_unit',
+					'name'	=>	__('Default Unit of Measurement', 'mooberry-book-manager'),
+					'type'	=> 'select',
+					'default'	=> 'in',
+					'options'	=> mbdb_get_units_array(),
+				),
+				array(
+					'id'	=>	'mbdb_default_currency',
+					'name'	=>	__('Default Currency', 'mooberry-book-manager'),
+					'type'	=> 'select',
+					'default'	=> 'USD',
+					'options'	=> mbdb_get_currency_array(),
+				),
+				array(
+					'id'	=>	'mbdb_default_language',
+					'name'	=>	__('Default Language', 'mooberry-book-manager'),
+					'type'	=> 'select',
+					'default'	=> 'EN',
+					'options'	=> mbdb_get_language_array(),
+				),
+				array(
+					'id'	=> 'mbdb_grid_default_settings_title',
+					'name'	=>	__('BOOK GRID DEFAULT SETTINGS', 'mooberry-book-manager'),
+					'type'	=>	'title',
+				),
+			/*	array(
+					'id'	=>	'mbdb_default_cover_height',
+					'name'	=> __('Cover Height (px)', 'mooberry-book-manager'),
+					'type'	=> 'text_small',
+					'default'	=> 200,
+					'attributes' => array(
+							'type' => 'number',
+							'pattern' => '\d*',
+							'min' => 50,
+					),
+				),
+			*/
+				array(
+					'name'	=> __('Number of Books Across', 'mooberry-book-manager'),
+					'id'	=> 'mbdb_default_books_across',
+					'type'	=> 'text_small',
+					'default'	=>	3,
+					'attributes' => array(
+							'type' => 'number',
+							'pattern' => '\d*',
+							'min' => 1,
+					),
+				),
+			)
+		);
 }
 
 function mbdb_print_book_list() {
@@ -62,8 +219,9 @@ function mbdb_meta_fields( $fields) {
 	do_action('mbdb_settings_before_metabox');
 	cmb2_metabox_form( $metabox, 'mbdb_options' );	
 	do_action('mbdb_settings_after_metabox');
-	
-	include('views/admin-about-mooberry.php');
+	echo '<div id="mbdb_about_mooberry"><div id="mbdb_box">			<h3>Need help with Mooberry Book Manager?</h3>';
+		include('views/admin-about-mooberry.php');
+	echo '</div></div>';
 }
 
 function mbdb_retailers() {
@@ -155,17 +313,11 @@ function  mbdb_formats() {
 	));
 }
 	
-// generate uniqueIDs for formats and retailers
-function mbdb_uniqueID_generator( $value ) {
-	if ($value=='') {
-		$value =  uniqid();
-	}
-	return apply_filters('mbdb_settings_uniqid', $value);
-}
+
 
 // make the tabs for the admin screen
 function mbdb_admin_tabs( $current = 'book-page' ) {
-	$tabs = apply_filters('mbdb_settings_tabs', array( 'retailers' => __('Retailers', 'mooberry-book-manager'), 'formats' => _x('Formats', 'noun', 'mooberry-book-manager'))); //, 'output' => 'Print Book list'));
+	$tabs = apply_filters('mbdb_settings_tabs', array( 'general' => __('General Settings', 'mooberry-book-manager'), 'publishers' => __('Publishers', 'mooberry-book-manager'), 'editions' => __('Edition Formats', 'mooberry-book-manager'), 'retailers' => __('Retailers', 'mooberry-book-manager'), 'formats' => _x('E-book Formats', 'noun', 'mooberry-book-manager'))); //, 'output' => 'Print Book list'));
 	do_action('mbdb_settings_before_tabs');
 	echo '<div id="icon-options-general" class="icon32"></div>';
 	echo '<h2 class="nav-tab-wrapper">';
