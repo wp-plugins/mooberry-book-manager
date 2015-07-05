@@ -4,7 +4,7 @@
     Plugin URI: http://www.mooberrydreams.com/products/mooberry-book-manager/
     Description: An easy-to-use system for authors to add books their Wordpress website
     Author: Mooberry Dreams
-    Version: 1.3.2
+    Version: 2.0
     Author URI: http://www.mooberrydreams.com/
 	Text Domain: mooberry-book-manager
 	
@@ -27,8 +27,7 @@
 	define('MBDB_PLUGIN_DIR', plugin_dir_path( __FILE__ )); 
 	
 	define('MBDB_PLUGIN_VERSION_KEY', 'mbdb_version');
-	define('MBDB_PLUGIN_VERSION', '1.3.2');
-	
+	define('MBDB_PLUGIN_VERSION', '2.0');
 		
 		
 	// Load in CMB2
@@ -63,43 +62,64 @@
 	register_activation_hook( __FILE__, 'mbdb_activate' );
 	function mbdb_activate() {
 	
+		mbdb_set_up_roles();
 		
 		
 		$mbdb_options = get_option( 'mbdb_options' );
 		
 		// check if default retailers and formats exist in database and add them if necessary
 		$default_retailers = array();
-		$default_retailers[] = array('name' => 'Amazon', 'uniqueID' => 1, 'image' => 'amazon.jpg');
+		$default_retailers[] = array('name' => 'Amazon', 'uniqueID' => 1, 'image' => 'amazon.png');
 		$default_retailers[] = array('name' => 'Barnes and Noble', 'uniqueID' => 2, 'image' => 'bn.jpg');
 		$default_retailers[] = array('name' => 'Kobo', 'uniqueID' => 3, 'image' => 'kobo.png');
 		$default_retailers[] = array('name' => 'iBooks', 'uniqueID' => 4, 'image' => 'ibooks.png');
 		$default_retailers[] = array('name' => 'Smashwords', 'uniqueID' => 5, 'image' => 'smashwords.png');
+		$default_retailers[] = array('name' => 'Audible', 'uniqueID' => 6, 'image' => 'audible.png' );
+		$default_retailers[] = array('name' => 'Book Baby', 'uniqueID' => 7, 'image' => 'bookbaby.gif' );
+		$default_retailers[] = array('name' => 'Books A Million', 'uniqueID' => 8, 'image' => 'bam.png' );
+		$default_retailers[] = array('name' => 'Create Space', 'uniqueID' => 9, 'image' => 'createspace.png' );
+		$default_retailers[] = array('name' => 'Indie Bound', 'uniqueID' => 10, 'image' => 'indiebound.gif' );
+		$default_retailers[] = array('name' => 'Powells', 'uniqueID' => 11, 'image' => 'powells.jpg' );
+		$default_retailers[] = array('name' => 'Scribd', 'uniqueID' => 12, 'image' => 'scribd.png' );
+		$default_retailers[] = array('name' => 'Amazon Kindle', 'uniqueID' => 13, 'image' => 'kindle.png' );
+		$default_retailers[] = array('name' => 'Barnes and Noble Nook', 'uniqueID' => 14, 'image' => 'nook.png' );
 		$default_retailers = apply_filters('mbdb_default_retailers', $default_retailers);
 		
 		$default_formats = array();
-		$default_formats[] = array('name' => 'ePub', 'uniqueID' => 1, 'image' => 'epub.gif');
-		$default_formats[] = array('name' => 'Kindle', 'uniqueID' => 2, 'image' => 'kindle.jpg');
+		$default_formats[] = array('name' => 'ePub', 'uniqueID' => 1, 'image' => 'epub.png');
+		$default_formats[] = array('name' => 'Kindle', 'uniqueID' => 2, 'image' => 'amazon-kindle.jpg');
 		$default_formats[] = array('name' => 'PDF', 'uniqueID' => 3, 'image' => 'pdficon.png');
 		$default_formats = apply_filters('mbdb_default_formats', $default_formats);
 		
 		mbdb_insert_defaults( $default_retailers, 'retailers', $mbdb_options);
 		mbdb_insert_defaults( $default_formats, 'formats', $mbdb_options);
 		
+		mbdb_insert_default_edition_formats($mbdb_options);
 		
 		// check if the coming soon image exists and add it if necessary
 		if (!array_key_exists('coming-soon', $mbdb_options)) {
 			$attachID = mbdb_upload_image('coming_soon_blue.jpg');
-			$img = wp_get_attachment_url( $attachID );
-			$mbdb_options['coming-soon'] = $img;
 			$mbdb_options['coming-soon-id'] = $attachID;
+			if ( $attachID != 0) {
+				$img = wp_get_attachment_url( $attachID );
+				$mbdb_options['coming-soon'] = $img;
+			} else {
+				$mbdb_options['coming-soon'] = '';
+			}
+			
 		}
 			
 		// check if goodreads image exists and add it if necessary
 		if (!array_key_exists('goodreads', $mbdb_options)) {
 			$attachID = mbdb_upload_image('goodreads.png');
-			$img = wp_get_attachment_url( $attachID );
-			$mbdb_options['goodreads'] = $img;
 			$mbdb_options['goodreads-id'] = $attachID;
+			if ($attachID != 0) {
+				$img = wp_get_attachment_url( $attachID );
+				$mbdb_options['goodreads'] = $img;
+			} else {
+				$mbdb_options['goodreads'] = '';
+			}
+			
 		}
 		
 		// check if default book page exists and add it if necessary
@@ -160,16 +180,20 @@
 		wp_enqueue_style( 'mbdb-admin-styles' );
 	}
 	
-	add_action( 'wp_enqueue_scripts', 'mbdb_register_styles' );
+	add_action( 'wp_enqueue_scripts', 'mbdb_register_styles', 15 );
 	function mbdb_register_styles() {
 		wp_register_style( 'mbdb-styles', plugins_url( 'css/styles.css', __FILE__) ) ;
 		wp_enqueue_style( 'mbdb-styles' );
+		wp_enqueue_script('single-book', plugins_url('includes/js/single-book.js', __FILE__), array('jquery'));
+		
 	}
 
 	add_action( 'admin_footer', 'mbdb_register_script');
 	function mbdb_register_script() {
-		wp_enqueue_script( 'admin-book-grid',  plugins_url( 'includes/js/admin-book-grid.js', __FILE__));
+		wp_enqueue_script( 'admin-book-grid',  plugins_url( 'includes/js/admin-book-grid.js', __FILE__)); 
 		wp_enqueue_script( 'admin-widget',  plugins_url( 'includes/js/admin-widget.js', __FILE__));		
+		wp_enqueue_script( 'admin-book', plugins_url(  'includes/js/admin-book.js', __FILE__), array('jquery'));
+		
 	}
 
 	add_action('widgets_init', 'mbdb_register_widgets');
@@ -187,7 +211,10 @@
 		global $wp_rewrite;
 		$new_rules['series/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_series&the-term=$matches[1]&post_type=mbdb_tax_grid';
 		$new_rules['genre/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_genre&the-term=$matches[1]&post_type=mbdb_tax_grid';
-		$new_rules['tag/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=post_tag&the-term=$matches[1]&post_type=mbdb_tax_grid';
+		$new_rules['book-tag/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_tag&the-term=$matches[1]&post_type=mbdb_tax_grid';
+		$new_rules['mbdb_series/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_series&the-term=$matches[1]&post_type=mbdb_tax_grid';
+		$new_rules['mbdb_genres/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_genre&the-term=$matches[1]&post_type=mbdb_tax_grid';
+		$new_rules['mbdb_tags/([^/]*)/?$'] =  'mbdb_tax_grid/?x=x&the-taxonomy=mbdb_tag&the-term=$matches[1]&post_type=mbdb_tax_grid';
 		
 		$wp_rewrite->rules = $new_rules + $wp_rewrite->rules;		
 	}
@@ -212,10 +239,6 @@
 	add_action( 'init', 'mbdb_init' );	
 	function mbdb_init() {
 	
-			mbdb_upgrade_versions();
-		
-	
-	
 		// create Book Post Type
 		register_post_type('mbdb_book',
 			apply_filters('mbdb_book_cpt', array(	
@@ -227,12 +250,13 @@
 			'menu_position' => 20,
 			'show_in_nav_menus' => true,
 			'has_archive' => false,
-			'capability_type' => 'post',
+			'capability_type' => array( 'mbdb_book', 'mbdb_books'),
+			'map_meta_cap' => true,
 			'hierarchical' => false,
 			'rewrite' => array( 'slug' => 'book' ),
 			'query_var' => true,
-			'supports' => array( 'title' ),
-			'taxonomies' => array( 'post_tag', 'mbdb_genre', 'mbdb_series' ),
+			'supports' => array( 'title', 'comments' ),
+			'taxonomies' => array( 'mbdb_tag', 'mbdb_genre', 'mbdb_series' ),
 			'labels' => array (
 				'name' => _x('Books', 'noun', 'mooberry-book-manager'),
 				'singular_name' => _x('Book', 'noun', 'mooberry-book-manager'),
@@ -274,9 +298,17 @@
 		
 		register_taxonomy('mbdb_genre', 'mbdb_book', 
 			apply_filters('mdbd_genre_taxonomy', array(
+				//'rewrite' => false, 
 				'rewrite' => array(	'slug' => 'mbdb_genres' ),
+				'public' => true, //false,
 				'show_admin_column' => true,
 				'update_count_callback' => '_update_post_term_count',
+				'capabilities'	=> array(
+					'manage_terms' => 'manage_categories',
+					'edit_terms'   => 'manage_categories',
+					'delete_terms' => 'manage_categories',
+					'assign_terms' => 'manage_mbdb_books',				
+				),
 				'labels' => array(
 					'name' => __('Genres', 'mooberry-book-manager'),
 					'singular_name' => __('Genre', 'mooberry-book-manager'),
@@ -299,11 +331,54 @@
 			)
 		);
 
-		register_taxonomy('mbdb_series', 'mbdb_book', 
-			apply_filters('mbdb_series_taxonomy', array( 
-				'rewrite' => array( 'slug' => 'mbdb_series' ),
+	   	register_taxonomy('mbdb_tag', 'mbdb_book', 
+			apply_filters('mdbd_tag_taxonomy', array(
+				'rewrite' => array(	'slug' => 'mbdb_tags' ),
+			//	'rewrite'	=>	false,
+				'public'	=> true, //false,
 				'show_admin_column' => true,
 				'update_count_callback' => '_update_post_term_count',
+				'capabilities'	=> array(
+					'manage_terms' => 'manage_categories',
+					'edit_terms'   => 'manage_categories',
+					'delete_terms' => 'manage_categories',
+					'assign_terms' => 'manage_mbdb_books',				
+				),
+				'labels' => array(
+					'name' => __('Tags', 'mooberry-book-manager'),
+					'singular_name' => __('Tag', 'mooberry-book-manager'),
+					'search_items' => __('Search Tags' , 'mooberry-book-manager'),
+					'all_items' =>  __('All Tags' , 'mooberry-book-manager'),
+					'parent_item' =>  __('Parent Tag' , 'mooberry-book-manager'),
+					'parent_item_colon' =>  __('Parent Tag:' , 'mooberry-book-manager'),
+					'edit_item' =>  __('Edit Tag' , 'mooberry-book-manager'),
+					'update_item' =>  __('Update Tag' , 'mooberry-book-manager'),
+					'add_new_item' =>  __('Add New Tag' , 'mooberry-book-manager'),
+					'new_item_name' =>  __('New Tag Name' , 'mooberry-book-manager'),
+					'menu_name' =>  __('Tags' , 'mooberry-book-manager'),
+					'popular_items' => __('Popular Tags', 'mooberry-book-manager'),
+					'separate_items_with_commas' => __('Separate tags with commas', 'mooberry-book-manager'),
+					'add_or_remove_items' => __('Add or remove tags', 'mooberry-book-manager'),
+					'choose_from_most_used' => __('Choose from the most used tags', 'mooberry-book-manager'),
+					'not_found' => __('No tags found', 'mooberry-book-manager')
+				)
+			)
+			)
+		);  
+
+
+		register_taxonomy('mbdb_series', 'mbdb_book', 
+			apply_filters('mbdb_series_taxonomy', array( 
+				'rewrite' =>  array( 'slug' => 'mbdb_series' ),
+				'public' => true, // false,
+				'show_admin_column' => true,
+				'update_count_callback' => '_update_post_term_count',
+				'capabilities'	=> array(
+					'manage_terms' => 'manage_categories',
+					'edit_terms'   => 'manage_categories',
+					'delete_terms' => 'manage_categories',
+					'assign_terms' => 'manage_mbdb_books',				
+				),
 				'labels' => array(
 					'name' => __('Series', 'mooberry-book-manager'),
 					'singular_name' => __('Series', 'mooberry-book-manager'),
@@ -324,6 +399,29 @@
 				)
 			))
 		);
+		
+		mbdb_upgrade_versions();
+	
+	}
+	
+	// add in a check in case the user has their theme set to use excerpts on 
+	// archives. this was found by the Generate theme.
+	add_filter('the_excerpt', 'mbdb_excerpt');
+	function mbdb_excerpt($content) {
+		
+		// if on a tax grid and there's query vars set, display the special grid
+		if ( get_post_type() == 'mbdb_tax_grid' && is_main_query() && !is_admin() ) {
+			$content =  mbdb_content('');
+		}
+		// if we're in the admin side and the post type is mbdb_book then we're showign the list of books
+		// truncate the excerpt
+		if (is_admin() && get_post_type() == 'mbdb_book') {
+			$content = trim(substr($content, 0, 50));
+			if (strlen($content) > 0) {
+				$content .= '...';
+			}
+		}
+		return $content;
 	}
 
 	// because the Customizr theme doesn't use the standard WP set up and
@@ -352,8 +450,16 @@
 				if ( isset( $wp_query->query_vars['the-taxonomy'] ) ) {
 					$taxonomy = trim( urldecode( $wp_query->query_vars['the-taxonomy'] ), '/' );
 					$mbdb_books = mbdb_get_books_in_taxonomy( $mbdb_series, $taxonomy );
-				
-					$content = mbdb_display_grid( array( $mbdb_books ), 200, 3, 0 );
+					// get default values for cover height and books across
+					$mbdb_options = get_option('mbdb_options');
+				//	if (!isset($mbdb_options['mbdb_default_cover_height'])) {
+				//		$mbdb_options['mbdb_default_cover_height'] = 200;
+				//	}
+					if (!isset($mbdb_options['mbdb_default_books_across'])) {
+						$mbdb_options['mbdb_default_books_across'] = 3;
+					}
+					
+					$content = mbdb_display_grid( array( $mbdb_books ), 0, $mbdb_options['mbdb_default_books_across'], 0 );
 				}
 			} 
 		}
@@ -363,9 +469,9 @@
 add_action('admin_notices', 'mbdb_admin_notice',0);
 function mbdb_admin_notice(){
     //print the message
-    global $post;
+	global $post;
     $notice = get_option('mbdb_notice');
-    if (empty($notice)) return '';
+	if (empty($notice)) return '';
     foreach($notice as $pid => $m){
         if ($post->ID == $pid ){
             echo apply_filters('mbdb_admin_notice', '<div id="message" class="error"><p>'.$m.'</p></div>');

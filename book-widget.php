@@ -4,7 +4,7 @@ class mbdb_book_widget extends WP_Widget {
 	// constructor
 	function __construct() {
 		$widget_ops = array('classname' => 'mbdb_book_widget', 'description' => __('Shows the cover of the book of your choosing with a link to the book page', 'mooberry-book-manager'));
-		parent::WP_Widget(false, $name = 'Mooberry Book Manager '. _x('Book', 'noun', 'mooberry-book-manager'), $widget_ops  );
+		parent::WP_Widget('mbdb_book_widget', 'Mooberry Book Manager '. _x('Book', 'noun', 'mooberry-book-manager'), $widget_ops  );
 
 	}
 
@@ -46,7 +46,7 @@ class mbdb_book_widget extends WP_Widget {
 		}
 		$instance['mbdb_widget_cover_size'] = strip_tags($new_instance['mbdb_widget_cover_size']);
 		do_action('mbdb_widget_after_update', $new_instance, $instance);
-		return apply_filters('mbdb_widget_update', $instance);
+		return apply_filters('mbdb_widget_update', $instance, $new_instance);
 	}
 
 	// widget display
@@ -54,6 +54,7 @@ class mbdb_book_widget extends WP_Widget {
 		extract($args);
 		$mbdb_bookID  = $instance['mbdb_bookID'];
 		$mbdb_widget_type = apply_filters('mbdb_widget_type', $instance['mbdb_widget_type']);
+		do_action('mbdb_widget_before_get_books', $instance);
 		switch ($mbdb_widget_type) {
 			case 'random':
 				// get book ID of a random book
@@ -112,7 +113,7 @@ class mbdb_book_widget extends WP_Widget {
 		
 		do_action('mbdb_widget_before_display');
 		echo $before_widget;
-		echo '<div>';
+		//echo '<div>';
 		echo $before_title . esc_html($mbdb_widget_title) . $after_title;
 		
 		if ($mbdb_bookID == 0) {
@@ -127,7 +128,7 @@ class mbdb_book_widget extends WP_Widget {
 			}
 			if ($image_src != '') { 
 				do_action('mbdb_widget_before_image', $image_src);
-				echo '<img class="mbm-widget-cover" style="width:' . esc_attr($mbdb_cover_size) . 'px" src="' . esc_url($image_src) . '" /> ';
+				echo '<img class="mbm-widget-cover" style="width:' . esc_attr($mbdb_cover_size) . 'px;padding-top:10px;" src="' . esc_url($image_src) . '" /> ';
 				do_action('mbdb_widget_after_image', $image_src);
 			}
 			if ($mbdb_widget_show_title == 'yes') { 
@@ -143,7 +144,8 @@ class mbdb_book_widget extends WP_Widget {
 			}
 			
 		}
-		echo '</div>' . $after_widget;
+		//echo '</div>' . 
+		echo $after_widget;
 		do_action('mbdb_widget_after_display');
 	}
 	
