@@ -434,6 +434,11 @@
 	function mbdb_content($content) {
 		global $wp_query;
 
+		// Don't add to sidebar or other widgets, only to the central content block of the page.
+		if ( !in_the_loop() || !is_main_query() ) {
+			return $content;
+		}
+
 		// make sure it's the post type 'book'
 		if (get_post_type() == 'mbdb_book' && is_main_query() && !is_admin()) {
 			$content .= mbdb_book_content($content);
