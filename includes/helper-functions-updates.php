@@ -23,8 +23,10 @@ function mbdb_upgrade_versions() {
 			$wp_rewrite->flush_rules();
 		}
 		
+		if (version_compare($current_version, '2.1', '<')) {
+			mbdb_migrate_to_book_grid_height_defaults();
+		}
 	
-		
 		
 		// update database to the new version
 		update_option(MBDB_PLUGIN_VERSION_KEY, MBDB_PLUGIN_VERSION);
@@ -76,7 +78,7 @@ function mbdb_upgrade_to_2_0() {
 	mbdb_update_format_images();
 
 	// update the excerpts
-	$mbdb_books = mbdb_get_books_list('all', null, 'title', 'ASC', null, null);
+	$mbdb_books = mbdb_get_books_list('all', null, 'title', 'ASC', null, null, null);
 	foreach($mbdb_books as $book) {
 		mbdb_save_excerpt($book->ID, $book);
 	}
@@ -179,7 +181,7 @@ function mbdb_migrate_post_tags() {
 	// remove post_tag terms from books
 	// do this outside of the above loop because it will remove ALL tags from the books
 	// and the above loop handles one tag at a time
-	 $mbdb_books = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null );
+	 $mbdb_books = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null, null );
 	foreach($mbdb_books as $mbdb_book) {
 		$bookID = $mbdb_book->ID;
 		wp_delete_object_term_relationships( $bookID, 'post_tag' );
@@ -244,7 +246,7 @@ function mbdb_migrate_publishers() {
 		$publishers = array();
 	}
 	
-	$mbdb_books = mbdb_get_books_list('all', null, 'title', 'ASC', null, null);
+	$mbdb_books = mbdb_get_books_list('all', null, 'title', 'ASC', null, null, null);
 	foreach ($mbdb_books as $book) {
 		$book_publisher = get_post_meta($book->ID, '_mbdb_publisher', true);
 		$book_website = get_post_meta($book->ID, '_mbdb_publisherwebsite', true);
@@ -270,4 +272,40 @@ function mbdb_migrate_publishers() {
 	// update options		
 	$mbdb_options['publishers'] = $publishers;
 	update_option('mbdb_options', $mbdb_options);
+}
+
+function mbdb_migrate_to_book_grid_height_defaults() {
+	
+	// set the default values
+	$mbdb_options = get_option('mbdb_options');
+	
+	if (!isset($mbdb_options['mbdb_default_cover_height'])) {
+		$mbdb_options['mbdb_default_cover_height'] = 200;
+	}
+	
+	update_option('mbdb_options', $mbdb_options);
+	
+	$grid_pages = get_posts(array(
+								'posts_per_page' => -1,
+								'post_type' => 'page',
+								'meta_query'	=>	array(
+										array(
+											'key'	=>	'_mbdb_book_grid_display',
+											'value'	=>	'yes',
+											'compare'	=>	'=',
+										),
+									),	
+							)
+					);
+	foreach($grid_pages as $page) {
+		update_post_meta($page->ID, '_mbdb_book_grid_cover_height_default', 'no');
+		$current_height = get_post_meta($page->ID, '_mbdb_book_grid_cover_height', true);
+		if ($current_height == '') {
+			update_post_meta($page->ID, '_mbdb_book_grid_cover_height', $mbdb_options['mbdb_default_cover_height']);
+		}
+	}
+	wp_reset_postdata();
+					
+	
+	
 }

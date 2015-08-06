@@ -137,7 +137,16 @@ function mbdb_general_settings() {
 					'id'	=> 'mbdb_book_default_settings_title',
 					'name'	=>	__('BOOK PAGE DEFAULT SETTINGS', 'mooberry-book-manager'),
 					'type'	=>	'title',
-				),array(
+				),
+				array(
+					'id'	=>	'mbdb_default_template',
+					'name'	=> __('Page Template', 'mooberry-book-manager'),
+					'type'	=> 'select',
+					'default'	=>	'default',
+					'options'	=> mbdb_get_template_list(),
+				),
+				
+				array(
 					'id'	=>	'mbdb_default_unit',
 					'name'	=>	__('Default Unit of Measurement', 'mooberry-book-manager'),
 					'type'	=> 'select',
@@ -163,7 +172,7 @@ function mbdb_general_settings() {
 					'name'	=>	__('BOOK GRID DEFAULT SETTINGS', 'mooberry-book-manager'),
 					'type'	=>	'title',
 				),
-			/*	array(
+				array(
 					'id'	=>	'mbdb_default_cover_height',
 					'name'	=> __('Cover Height (px)', 'mooberry-book-manager'),
 					'type'	=> 'text_small',
@@ -174,7 +183,7 @@ function mbdb_general_settings() {
 							'min' => 50,
 					),
 				),
-			*/
+			/*
 				array(
 					'name'	=> __('Number of Books Across', 'mooberry-book-manager'),
 					'id'	=> 'mbdb_default_books_across',
@@ -186,12 +195,13 @@ function mbdb_general_settings() {
 							'min' => 1,
 					),
 				),
+				*/
 			)
 		);
 }
 
 function mbdb_print_book_list() {
-	$book_query = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null );
+	$book_query = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null, null );
 	$output = '<table border="1"><tr><th>ID</th><th>Title</th><th>Cover</th><th>Genre</th><th>Series</th><th>Pub Date</th><th>Author</th><th>Series Order</th></tr>';
 	foreach($book_query as $book) {
 		$output .= '<tr><td>' . $book->ID . '</td><td>' . $book->post_title . '</td><td>';
@@ -329,5 +339,3 @@ function mbdb_admin_tabs( $current = 'book-page' ) {
 	do_action('mbdb_settings_after_tabs');
 }
 
-	
-	

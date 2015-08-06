@@ -10,6 +10,25 @@ require_once dirname( __FILE__ ) . '/helper-functions-updates.php';
 	
 ***********************************************************/
 
+function mbdb_get_grid_cover_height( $postID = null ) {
+	if ($postID != null) {
+		$mbdb_book_grid_cover_height_default = get_post_meta( $postID, '_mbdb_book_grid_cover_height_default', true);
+	} else {
+		$mbdb_book_grid_cover_height_default = 'yes';
+	}
+	if ($mbdb_book_grid_cover_height_default == 'yes') {
+		if (isset($mbdb_options['mbdb_default_cover_height'])) {
+			$mbdb_book_grid_cover_height = $mbdb_options['mbdb_default_cover_height'];
+		}
+	} else {
+		$mbdb_book_grid_cover_height = get_post_meta( $postID, '_mbdb_book_grid_cover_height', true);
+	}
+	if (!isset($mbdb_book_grid_cover_height) || $mbdb_book_grid_cover_height == '') {
+		$mbdb_book_grid_cover_height = 200;
+	}
+	return $mbdb_book_grid_cover_height;
+}
+
 // generate uniqueIDs for formats and retailers
 function mbdb_uniqueID_generator( $value ) {
 	if ($value=='') {
@@ -146,7 +165,8 @@ function mbdb_set_up_roles() {
 	
 *****************************************************/
 
-function mbdb_get_books_list( $selection, $selection_ids, $sort_field, $sort_order, $genre_ids, $series_ids ) {
+// v2.1 - parameter added - $tag_ids
+function mbdb_get_books_list( $selection, $selection_ids, $sort_field, $sort_order, $genre_ids, $series_ids, $tag_ids ) {
 	// title is not a custom field so it uses orderby to set the field
 	// other sorting is by custom fields and they use orderby = 'meta_value' and meta_key = field
 	if ( $sort_field != 'title' ) {
@@ -171,11 +191,18 @@ function mbdb_get_books_list( $selection, $selection_ids, $sort_field, $sort_ord
 	$series_tax_query = mbdb_set_tax_query( $series_ids, 'mbdb_series', $sort_field, $meta_key );
 	
 	$genre_tax_query = mbdb_set_tax_query( $genre_ids, 'mbdb_genre', $sort_field, $meta_key );
+	
+	$tag_tax_query = mbdb_set_tax_query( $tag_ids, 'mbdb_tag', $sort_field, $meta_key );
+	
 	if ( $series_tax_query != null ) {
 		$args['tax_query'][] = $series_tax_query;
 	}
 	if ( $genre_tax_query != null ) {
 		$args['tax_query'][] = $genre_tax_query;
+	}
+	
+	if ($tag_tax_query != null ) {
+		$args['tax_query'][] = $tag_tax_query;
 	}
 	if ( array_key_exists( 'tax_query', $args ) ) {
 		if ( count( $args['tax_query'] ) > 1 ) {
@@ -280,13 +307,13 @@ function mbdb_get_books_list( $selection, $selection_ids, $sort_field, $sort_ord
 		}
 		$args['order'] = $sort_order;
 	} 
-	
+//	error_log('args = ' . print_r($args, true));
 	
 	$books = get_posts( apply_filters('mbdb_get_books_main_query', $args ) );
 	
 	if ( isset( $args2 ) ) {
 	
-	
+//	error_log('args2 = ' . print_r($args2, true));
 		$books2 = get_posts( apply_filters('mbdb_get_books_blank_pubdate', $args2 ) );
 		if ( $sort_order == 'ASC' ) {
 			// oldest first, so put blanks at the end
@@ -298,7 +325,7 @@ function mbdb_get_books_list( $selection, $selection_ids, $sort_field, $sort_ord
 	}
 	
 	if ( isset( $args3 ) ) {
-
+//error_log('args3 = ' . print_r($args3, true));
 		$books3 = get_posts( apply_filters( 'mbdb_get_books_blank_series_order', $args3 ) );
 		$books = array_merge( $books, $books3 );
 	}
@@ -387,9 +414,11 @@ function mbdb_get_publisher_info( $publisherID, $mbdb_options = null ) {
 	if ($mbdb_options == null) {
 		$mbdb_options = get_option('mbdb_options');
 	}
-	foreach ($mbdb_options['publishers'] as $publisher) {
-		if ($publisher['uniqueID'] == $publisherID) {
-			return $publisher;
+	if (array_key_exists('publishers', $mbdb_options)) {
+		foreach ($mbdb_options['publishers'] as $publisher) {
+			if ($publisher['uniqueID'] == $publisherID) {
+				return $publisher;
+			}
 		}
 	}
 	return null;
@@ -429,7 +458,7 @@ function mbdb_get_list( $options_key ) {
 }	
 	
 function mbdb_get_book_array() {
-	$book_query = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null );
+	$book_query = mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null, null );
 	$books = array();
 	foreach( $book_query as $book ) {
 		$books[$book->ID] = $book->post_title;
@@ -439,7 +468,7 @@ function mbdb_get_book_array() {
 	
 
 function mbdb_get_book_dropdown( $selected_bookID ) {
-	$book_query = apply_filters('mbdb_get_book_downdown_list', mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null ) );
+	$book_query = apply_filters('mbdb_get_book_downdown_list', mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null, null ) );
 	foreach( $book_query as $book ) {
 		$book_title = $book->post_title;
 		$book_id = $book->ID;
@@ -718,7 +747,13 @@ function mbdb_get_format_name( $format ) {
 	return '';
 }
 
-
+function mbdb_get_template_list() {
+	$all_templates = wp_get_theme()->get_page_templates();
+	
+	$all_templates = array_merge( array('default' => __('Default', 'mooberry-book-manager')), $all_templates);
+	
+	return $all_templates;
+}
 
 /**** OBSOLETE
 
