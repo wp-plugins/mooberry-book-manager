@@ -2,8 +2,8 @@
 **Contributors:** mooberrydreams  
 **Tags:** book, author, publisher, writer, books, writing, publishing, authors   
 **Requires at least:** 3.8.0  
-**Tested up to:** 4.2  
-**Stable tag:** 1.3   
+**Tested up to:** 4.2.4  
+**Stable tag:** 2.1  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -27,6 +27,26 @@ Mooberry Book Manager works with your chosen theme to provide a consistent look 
 
 Requires Wordpress 3.8. The admin screens (for creating books, etc.) require Javascript, but the public pages do not.
 
+##Getting Started with Mooberry Book Manager  
+After installing and activating Mooberry Book Manager, you'll now have a Books menu.  Use that to add your books to your website.
+
+In order for your books to appear on your website, you need to add a Book Grid and/or a Widget.
+
+To Add a Book Grid:  
+* Create a new Page or edit an existing one  
+* Scroll down to the Book Grid Settings section  
+* Choose the books, grouping, and sort order  
+* Save the page and view it. Click on any book cover to get details of the book  
+
+To Add a Widget:  
+* Go to Appearance -> Widget  
+* Drag the Mooberry Book Manager Book Widget to the Widget Area of your choice  
+* Choose the book to display  
+* Save the widget and view your website. Click on the book cover to get the details of the book.  
+
+Additonal questions?  
+Download the [User Manual](http://www.mooberrydreams.com/support/mooberry-book-manager-support/) (PDF format)
+
 Want regular updates? 
 * Like Mooberry Dreams on Facebook: https://www.facebook.com/MooberryDreams
 * Follow Mooberry Dreams on Twitter: https://twitter.com/MooberryDreams
@@ -34,22 +54,29 @@ Want regular updates?
 * Subscribe to Mooberry Dreams' mailing list: http://www.mooberrydreams.com/products/mooberry-book-manager/
 
 
+
+
 ## Changelog
+#### 2.1 
+* New: Book Grids are now responsive  
+* New: Added Serbo–Croatian translation  
+* New: Choose which theme template to use for your book pages  
+* Improved: Filter Book Grids by tag  
+* Improved: Group Book Grids by tag  
+* Changed: Book Grids cover height configurable, instead of number of book per row  
 
-#### 1.3   
-* Added 9 new retailers   
-* Escapes add_query_vars for safety   
+#### 2.0.1  
+* Flushes rewrite rules  
 
-#### 1.2 
-* Fixes bugs introduced in 1.1 (oops!)
+#### 2.0 
+* New: Added General Settings, Publisher Settings, and Edition Formats Settings
+* New: Added Editions to book pages 
+* New: Added Librarian and Master Librarian Roles
+* New: Added French translation
+* Improved: Redesigned layout of Book Page
+* Improved: Blank data defaults and labels no longer display on Book Page
+* Improved: Added Comments support to books
+* Fixed: Moved tags to new custom taxonomy instead of using post tags.
 
-#### 1.1 
-* Added support for language translations   
-* Added German translation  
-* Fixed issues resulting from Customizr theme  
-* Fixed bug with book drop down in widget  
-
-#### 1.0 
-
-* Initial Release
+For more revision history, see changelog.md
 

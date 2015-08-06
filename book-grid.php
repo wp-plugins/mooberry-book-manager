@@ -34,7 +34,7 @@ add_filter('the_title', 'mbdb_tax_grid_title');
 function mbdb_tax_grid_title( $content, $id = null ) {
 	
 	if ( is_main_query() && in_the_loop() && get_post_type() == 'mbdb_tax_grid' ) {
-		$content = mbdb_get_tax_title($content);
+		$content = apply_filters('mbdb_tax_grid_title', mbdb_get_tax_title($content));
 	}
 	return $content;
 } 
@@ -48,7 +48,7 @@ function mbdb_get_tax_title( $content ) {
 				$term = get_term_by('slug', $mbdb_term, $mbdb_taxonomy);			
 				$taxonomy = get_taxonomy($mbdb_taxonomy);
 				if (isset($term) && isset($taxonomy) && $term != null && $taxonomy !=null) {
-					if ($mbdb_taxonomy != 'post_tag') {
+					if ($mbdb_taxonomy != 'mbdb_tag') {
 						$content = apply_filters('mbdb_book_grid_' . $mbdb_taxonomy . '_title', $term->name . ' ' . $taxonomy->labels->singular_name, $term, $taxonomy);
 					} else {
 						$content = apply_filters('mbdb_book_grid_tag_title', __('Books tagged with ', 'mooberry-book-manager') . $term->name, $term, $taxonomy);
@@ -104,6 +104,7 @@ function mbdb_book_grid_meta_boxes( array $meta_boxes ) {
 						'unpublished'	=> __('All Coming Soon', 'mooberry-book-manager'),
 						'genre'			=> __('Select Genres', 'mooberry-book-manager'),
 						'series'	=> __('Select Series', 'mooberry-book-manager'),
+						'tag'		=> __('Select Tags', 'mooberry-book-manager'),
 						'custom'	=> __('Select Books', 'mooberry-book-manager'),
 					)
 				),
@@ -126,6 +127,12 @@ function mbdb_book_grid_meta_boxes( array $meta_boxes ) {
 					'type' 	=> 'taxonomy_multicheck',   
 				),
 				array(
+					'name'	=>	__('Select Tags', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_tag',
+					'taxonomy'	=> 'mbdb_tag',
+					'type'	=> 'taxonomy_multicheck',
+				),
+				array(
 					'name'	=>	__('Group Books By', 'mooberry-book-manager'),
 					'id'	=>	'_mbdb_book_grid_group_by',
 					'type'	=>	'select',
@@ -133,11 +140,41 @@ function mbdb_book_grid_meta_boxes( array $meta_boxes ) {
 						'none'		=>	__('None', 'mooberry-book-manager'),
 						'genre'		=>	__('Genre', 'mooberry-book-manager'),
 						'series'	=>	__('Series', 'mooberry-book-manager'),
+						'tag'		=>	__('Tag', 'mooberry-book-manager'),
 					),
 				),
 				array(
 					'name'	=>	__('Group Within Genre By', 'mooberry-book-manager'),
 					'id'	=>	'_mbdb_book_grid_genre_group_by',
+					'type'	=>	'select',
+					'options'	=>	array(
+						'none'		=>	__('None', 'mooberry-book-manager'),
+						'series'	=>	__('Series', 'mooberry-book-manager'),
+						'tag'		=>	__('Tag', 'mooberry-book-manager'),
+					),
+				),
+				array(
+					'name'	=>	__('Group Within Tag By', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_tag_group_by',
+					'type'	=>	'select',
+					'options'	=>	array(
+						'none'		=>	__('None', 'mooberry-book-manager'),
+						'series'	=>	__('Series', 'mooberry-book-manager'),
+						'genre'		=>	__('Genre', 'mooberry-book-manager'),
+					),
+				),
+				array(
+					'name'	=>	__('Group Within Tag By', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_genre_tag_group_by',
+					'type'	=>	'select',
+					'options'	=>	array(
+						'none'		=>	__('None', 'mooberry-book-manager'),
+						'series'	=>	__('Series', 'mooberry-book-manager'),
+					),
+				),
+				array(
+					'name'	=>	__('Group Within Genre By', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_tag_genre_group_by',
 					'type'	=>	'select',
 					'options'	=>	array(
 						'none'		=>	__('None', 'mooberry-book-manager'),
@@ -157,32 +194,51 @@ function mbdb_book_grid_meta_boxes( array $meta_boxes ) {
 					),
 				),
 				array(
-					'name'	=> __('Book Cover Height', 'mooberry-book-manager'),
+					'name'	=>	__('Use default cover height?', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_cover_height_default',
+					'type'	=>	'select',
+					'default'	=>	'yes',
+					'options'	=>	array(
+						'yes'	=> __('Yes','mooberry-book-manager'),
+						'no'	=>	__('No','mooberry-book-manager'),
+					),
+				),
+				array(
+					'name'	=> __('Book Cover Height (px)', 'mooberry-book-manager'),
 					'id'	=> '_mbdb_book_grid_cover_height',
 					'type'	=> 'text_small',
-					'default'	=> 200,
 					'attributes' => array(
 							'type' => 'number',
 							'pattern' => '\d*',
 							'min' => 50,
 					),
 				),
+		/*
+				array(
+					'name'	=>	__('Use default number of books across?', 'mooberry-book-manager'),
+					'id'	=>	'_mbdb_book_grid_books_across_default',
+					'type'	=>	'select',
+					'default'	=>	'yes',
+					'options'	=>	array(
+						'yes'	=> __('Yes','mooberry-book-manager'),
+						'no'	=>	__('No','mooberry-book-manager'),
+					),
+				),
 				array(
 					'name'	=> __('Number of Books Across', 'mooberry-book-manager'),
 					'id'	=> '_mbdb_book_grid_books_across',
 					'type'	=> 'text_small',
-					'default' => 3,
 					'attributes' => array(
 							'type' => 'number',
 							'pattern' => '\d*',
 							'min' => 1,
 					),
 				),
-		
+		*/
 			),
 		);
 		return apply_filters('mbdb_book_grid_meta_boxes', $meta_boxes);
-	}
+		}
 
 function mbdb_bookgrid_content() {
 		global $post;
@@ -193,20 +249,48 @@ function mbdb_bookgrid_content() {
 		return apply_filters('mbdb_book_grid_display_grid_no', $content);
 	}
 	
+	$mbdb_options = get_option('mbdb_options');
+	
 	$mbdb_book_grid_books = 		get_post_meta( $post->ID, '_mbdb_book_grid_books', true );
 	$mbdb_book_grid_order =			get_post_meta ($post->ID, '_mbdb_book_grid_order', true );
-	$mbdb_book_grid_cover_height =  get_post_meta( $post->ID, '_mbdb_book_grid_cover_height', true );
-	$mbdb_book_grid_books_across =  get_post_meta( $post->ID, '_mbdb_book_grid_books_across', true );
+	// $mbdb_book_grid_cover_height_default = get_post_meta( $post->ID, '_mbdb_book_grid_cover_height_default', true);
+	// if ($mbdb_book_grid_cover_height_default == 'yes') {
+		// if (!isset($mbdb_options['mbdb_default_cover_height'])) {
+			// $mbdb_options['mbdb_default_cover_height'] = 200;
+		// }
+		// $mbdb_book_grid_cover_height = $mbdb_options['mbdb_default_cover_height'];
+		//$mbdb_book_grid_cover_height = 0; // no longer used, just given a value because it's used in arguments.
+	// } else {
+		// $mbdb_book_grid_cover_height =  get_post_meta( $post->ID, '_mbdb_book_grid_cover_height', true );
+	// }
+	
+	$mbdb_book_grid_cover_height = mbdb_get_grid_cover_height( $post->ID);
+	
+	// $mbdb_book_grid_books_across_default = get_post_meta( $post->ID, '_mbdb_book_grid_books_across_default', true);
+	// if ($mbdb_book_grid_books_across_default == 'yes') {
+		// if (!isset($mbdb_options['mbdb_default_books_across'])) {
+			// $mbdb_options['mbdb_default_books_across'] = 3;
+		// }
+		// $mbdb_book_grid_books_across = $mbdb_options['mbdb_default_books_across'];
+	// } else {
+		// $mbdb_book_grid_books_across =  get_post_meta( $post->ID, '_mbdb_book_grid_books_across', true );
+	// }
+	$mbdb_book_grid_books_across = 1; // no longer used, just given a value because it's used in arguments.
+	
 	$mbdb_book_grid_genre = 		get_post_meta( $post->ID, '_mbdb_book_grid_genre', true );
 	$mbdb_book_grid_series = 		get_post_meta( $post->ID, '_mbdb_book_grid_series', true );
+	$mbdb_book_grid_tag	=			get_post_meta( $post->ID, '_mbdb_book_grid_tag', true);
 	$mbdb_book_grid_custom_select = get_post_meta( $post->ID, '_mbdb_book_grid_custom_select', true );
 	$mbdb_book_grid_genre_group_by = 	get_post_meta( $post->ID, '_mbdb_book_grid_genre_group_by', true );
 	$mbdb_book_grid_group_by = 	get_post_meta( $post->ID, '_mbdb_book_grid_group_by', true );
+	$mbdb_book_grid_tag_group_by = get_post_meta($post->ID, '_mbdb_book_grid_tag_group_by', true );
+	$mbdb_book_grid_genre_tag_group_by = get_post_meta($post->ID, '_mbdb_book_grid_genre_tag_group_by', true );
+	$mbdb_book_grid_tag_genre_group_by = get_post_meta($post->ID, '_mbdb_book_grid_tag_genre_group_by', true );
 	
-	// set defaults just in case
-	if ( (int) $mbdb_book_grid_books_across < 1 ) {
-		$mbdb_book_grid_books_across = 1;
-	}
+	// set mins just in case
+	// if ( (int) $mbdb_book_grid_books_across < 1 ) {
+		// $mbdb_book_grid_books_across = 1;
+	// }
 	if ( (int) $mbdb_book_grid_cover_height < 50 ) {
 		$mbdb_book_grid_cover_height = 50;
 	}
@@ -233,15 +317,10 @@ function mbdb_bookgrid_content() {
 		case 'series':
 			$sort_field = '_mbdb_series_order';
 			$sort_order = 'ASC';
+			break;
 		default:
 	}
-/* 	// if either group by option is series, the sort field is _mbdb_series_order
-	// and grid_sort should be empty
-	if ($mbdb_book_grid_group_by == 'series' || $mbdb_book_grid_genre_group_by == 'series') {
-		$sort_field = '_mbdb_series_order';
-		$sort_order = 'ASC';
-		$mbdb_book_grid_order = '';
-	}	 */
+
 	do_action('mbdb_book_grid_after_set_sort', $mbdb_book_grid_order);
 
 	// make sure the variables are valid, just in case
@@ -254,6 +333,10 @@ function mbdb_bookgrid_content() {
 	if ( $mbdb_book_grid_books != 'series' ) {
 		$mbdb_book_grid_series = null;
 	}
+	// if not choosing books by tag, there shouldn't be any tags chosen
+	if ($mbdb_book_grid_books != 'tag') {
+		$mbdb_book_grid_tag = null;
+	}
 	// if not choosing books, there shouldn't be any books chosen
 	if ( $mbdb_book_grid_books != 'custom' ) {
 		$mbdb_book_grid_custom_select = null;
@@ -261,15 +344,52 @@ function mbdb_bookgrid_content() {
 	// if not grouping by genre, there shouldn't be a genre group by
 	if ( $mbdb_book_grid_group_by != 'genre' ) {
 		$mbdb_book_grid_genre_group_by = 'none';
+		$mbdb_book_grid_genre_tag_group_by = 'none';
+	}
+	// if not grouping by tag, there shouldn't be a tag group by 
+	if ($mbdb_book_grid_group_by != 'tag' ) {
+		$mbdb_book_grid_tag_group_by = 'none';
+		$mbdb_book_grid_tag_genre_group_by = 'none';
+	}
+	// if grouping by genre and not by tag, there shouldn't be a genre tag group by 
+	if ($mbdb_book_grid_genre_group_by != 'tag') {
+		$mbdb_book_grid_genre_tag_group_by = 'none';
+	}
+	// if grouping by tag and not by genre, there shouldn't be a tag genre group by 
+	if ($mbdb_book_grid_tag_group_by != 'genre') {
+		$mbdb_book_grid_tag_genre_group_by = 'none';
 	}
 	// if getting standalones, there shouldn't be any series chosen
 	if ( $mbdb_book_grid_books == 'standalone' ) {
 		$mbdb_book_grid_series = '0';
 	}
+	 	// if either group by option is series, the sort field is _mbdb_series_order
+		// and grid_sort should be empty
+		// because we've already fixed all the other settings, the only one that would be
+		// series (if any) is the one the user set
+	if ($mbdb_book_grid_group_by == 'series' || $mbdb_book_grid_genre_group_by == 'series' || $mbdb_book_grid_tag_group_by == 'series' || $mbdb_book_grid_tag_genre_group_by == 'series' || $mbdb_book_grid_genre_tag_group_by == 'series') {
+		$sort_field = '_mbdb_series_order';
+		$sort_order = 'ASC';
+		$mbdb_book_grid_order = '';
+	}	 
+	
+	do_action('mbdb_verify_book_grid_options', $mbdb_book_grid_books, $mbdb_book_grid_genre, $mbdb_book_grid_series, $mbdb_book_grid_custom_select, $mbdb_book_grid_group_by, $mbdb_book_grid_genre_group_by, $mbdb_book_grid_tag);
+	
 	$mbdb_books = array();
-	$groupings = apply_filters('mbdb_book_grid_groupings', array($mbdb_book_grid_group_by, $mbdb_book_grid_genre_group_by, 'none'));
+	$groupings = array($mbdb_book_grid_group_by);
+	if ($mbdb_book_grid_group_by == 'genre') {
+		$groupings[] = $mbdb_book_grid_genre_group_by;
+		$groupings[] = $mbdb_book_grid_genre_tag_group_by;
+	}
+	if ($mbdb_book_grid_group_by == 'tag') {
+		$groupings[] = $mbdb_book_grid_tag_group_by;
+		$groupings[] = $mbdb_book_grid_tag_genre_group_by;
+	}
+	$groupings[] = 'none';
+	$groupings = array_unique($groupings);
+	$groupings = apply_filters('mbdb_book_grid_groupings', $groupings);
 
-	$mbdb_books[] = mbdb_book_grid_get_group($groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $sort_field, $sort_order);
+	$mbdb_books[] = mbdb_book_grid_get_group($groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $mbdb_book_grid_tag, $sort_field, $sort_order);
 	
 	do_action('mbdb_book_grid_before_display_grid', $mbdb_books, $mbdb_book_grid_cover_height, $mbdb_book_grid_books_across, 0);
 	$mbdb_books = apply_filters('mbdb_book_grid_books', $mbdb_books);
@@ -278,90 +398,107 @@ function mbdb_bookgrid_content() {
 	return apply_filters('mbdb_book_grid_content', $content);
 }
 
-function mbdb_book_grid_get_group($groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $sort_field, $sort_order) {
+// v2.1 parameter added: mbdb_book_grid_tag
+function mbdb_book_grid_get_group($groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $mbdb_book_grid_tag, $sort_field, $sort_order) {
 	
 	$group = array_shift($groupings);
 	$books = array();
+
+	// set defaults
+	// the one that matches group will be set to '0'
+	$series_no_group = $mbdb_book_grid_series;
+	$genre_no_group = $mbdb_book_grid_genre;
+	$tag_no_group = $mbdb_book_grid_tag;
+	$var = $group . '_no_group';
+	${$var} = '0';
+	
+	
 	switch ($group) {
-		case'none':
-			
+		// this case breaks out of the recursion
+		case 'none':
 			do_action('mbdb_book_grid_before_get_books', $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $sort_field, $sort_order, $mbdb_book_grid_genre, $mbdb_book_grid_series);
-			$books =  mbdb_get_books_list( $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $sort_field, $sort_order, $mbdb_book_grid_genre, $mbdb_book_grid_series); 
-			do_action('mbdb_book_grid_after_get_books', $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $sort_field, $sort_order, $mbdb_book_grid_genre, $mbdb_book_grid_series);
+			$books =  mbdb_get_books_list( $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $sort_field, $sort_order, $mbdb_book_grid_genre, $mbdb_book_grid_series, $mbdb_book_grid_tag); 
+			do_action('mbdb_book_grid_after_get_books', $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $sort_field, $sort_order, $mbdb_book_grid_genre, $mbdb_book_grid_series, $mbdb_book_grid_tag);
+			
+			return apply_filters('mbdb_book_grid_books_before_group_options', $books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $mbdb_book_grid_tag, $sort_field, $sort_order);
 			break;
 		case 'genre':
 			$empty = apply_filters('mbdb_book_grid_uncategorized_heading', __('Uncategorized', 'mooberry-book-manager'));
-			$books = mbdb_book_grid_get_books_not_in_group($group, $groupings, $empty, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, '0', $sort_field, $sort_order);
-			$books = mbdb_book_grid_get_books_in_taxonomy($books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, null, $sort_field, $sort_order);
 			break;
 		case 'series':
 			$empty = apply_filters('mbdb_book_grid_standalones_heading', __('Standalones', 'mooberry-book-manager'));
-			$books = mbdb_book_grid_get_books_not_in_group($group, $groupings, $empty, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, '0', $mbdb_book_grid_genre, $sort_field, $sort_order);
-			$books = mbdb_book_grid_get_books_in_taxonomy($books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, null, $mbdb_book_grid_genre, $sort_field, $sort_order);
+			break;
+		case 'tag':
+			$empty = apply_filters('mbdb_book_grid_untagged_heading', __('Untagged', 'mooberry-book-manager'));
 			break;
 	}
-	return apply_filters('mbdb_book_grid_books_before_group_options', $books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $sort_field, $sort_order);
 	
-	//return $books;
-}
-
-function mbdb_book_grid_get_books_not_in_group($group, $groupings, $empty, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $sort_field, $sort_order) {
 	$books = array();
-	// get standalones/Uncategorized but only if not selected series/genre
+	// get standalones/Uncategorized but only if not selected series/genre/tag
 	if ($mbdb_book_grid_books != $group) {
-		//do_action('mbdb_book_grid_before_ungrouped_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series1, $genre1, $sort_field, $sort_order);
-		$book_list = mbdb_book_grid_get_group( $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $sort_field, $sort_order);
-	//	do_action('mbdb_book_grid_after_ungrouped_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series1, $genre1, $sort_field, $sort_order);
+		$book_list = mbdb_book_grid_get_group( $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series_no_group, $genre_no_group, $tag_no_group, $sort_field, $sort_order);
 		if (count($book_list)>0) {
 			$books[$empty] = $book_list;
-			return $books;
 		} else {
-			return null;
+			$books = null;
 		}
 	}
+	
+	$books = mbdb_book_grid_get_books_in_taxonomy($books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $mbdb_book_grid_tag, $sort_field, $sort_order);
+			
+	return apply_filters('mbdb_book_grid_books_before_group_options', $books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $mbdb_book_grid_series, $mbdb_book_grid_genre, $mbdb_book_grid_tag, $sort_field, $sort_order);
 }
 
-function mbdb_book_grid_get_books_in_taxonomy($books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $sort_field, $sort_order ) {
-	$all_terms = get_terms( 'mbdb_' . $group, 'orderby=slug&hide_empty=1' );	
+// v2.1 -- added parameter tag
+function mbdb_book_grid_get_books_in_taxonomy($books, $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $tag, $sort_field, $sort_order ) {
+	
+	$terms_query = array('orderby' => 'slug',
+						'hide_empty' => true);
+	
+	// if we're grouping by what we're filtering by, only get terms that we're filtering on
+	if ($group == $mbdb_book_grid_books) {
+		$terms_query['include'] = ${$group};
+	}
+	
+	$all_terms = get_terms( 'mbdb_' . $group, $terms_query);
 	$taxonomy = get_taxonomy('mbdb_' . $group);
-	foreach ($all_terms as $term) {
-		$ids = ($group == 'series') ? $series : $genre;
-		if ($group == $mbdb_book_grid_books && array_search($term->term_id, $ids ) === false) {
-			continue;
-		}
-		if ($group == 'series') {
-			$series = $term->term_id;
-		} else {
-			$genre = $term->term_id;
-		}
-		//do_action('mbdb_book_grid_before_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series2, $genre2, $sort_field, $sort_order);
-		$book_list =  mbdb_book_grid_get_group( $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $sort_field, $sort_order);
-		//do_action('mbdb_book_grid_after_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series2, $genre2, $sort_field, $sort_order);
-		if (count($book_list)>0) {
-			$books[ apply_filters('mbdb_book_grid_heading', $term->name . ' ' . $taxonomy->labels->singular_name)] = $book_list;
-		}
+	$ids = ${$group};
+			
+		foreach ($all_terms as $term) {
+			${$group} = array($term->term_id);
+			
+			// if we've selected only certain type of this group, and the current term isn't one of them,
+			// skip to the next one
+			if ($group == $mbdb_book_grid_books && array_search($term->term_id, $ids ) === false) {
+				continue;
+			}
+			
+			//do_action('mbdb_book_grid_before_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series2, $genre2, $sort_field, $sort_order);
+			$book_list =  mbdb_book_grid_get_group( $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series, $genre, $tag, $sort_field, $sort_order);
+			//do_action('mbdb_book_grid_after_get_group', $group, $groupings, $mbdb_book_grid_books, $mbdb_book_grid_custom_select, $series2, $genre2, $sort_field, $sort_order);
+			if (count($book_list)>0) {
+				$books[ apply_filters('mbdb_book_grid_heading', $term->name . ' ' . $taxonomy->labels->singular_name)] = $book_list;
+			}
+		
 	}
 	return apply_filters('mbdb_book_grid_group_books', $books);
 }
 
 function mbdb_display_grid($mbdb_books, $mbdb_book_grid_cover_height, $mbdb_book_grid_books_across,  $l) {
-	// count how many books have been put in the row
-	$c = 0;
-	// figure out how wide each cell should be
-	$width = floor( 100 / $mbdb_book_grid_books_across );
-	// indent the grid by 15px per depth level of the array
+	// grab the coming soon image
+	$mbdb_options = get_option('mbdb_options');
+	$coming_soon_image = $mbdb_options['coming-soon'];
+// indent the grid by 15px per depth level of the array
 	do_action('mbdb_book_grid_before_div', $l);
 	$content = '<div class="mbm-book-grid-div" style="padding-left:' . (15 * $l) . 'px;">';
-	
-	// loop through the array
 	if (count($mbdb_books)>0) {
-		foreach($mbdb_books as $key => $set) {
-		
+	//	$content .= '<div style="clear:both">';
+		foreach ($mbdb_books as $key => $set) {
 			// If a label is set and there's at least one book, print the label
 			if ( $key && count( $set ) > 0 ) {
 				// set the heading level based on the depth level of the array
 				do_action('mbdb_book_grid_before_heading',  $l, $key);
-				$content .= '<h' . ( 2 + $l ) . ' class="mbm-book-grid-heading' . ( $l + 1 ) . '">' . $key . '</h' . ( 2 + $l ) .'>';
+				$content .= '<h' . ( 2 + $l ) . ' class="mbm-book-grid-heading' . ( $l + 1 ) . '">' . esc_html($key) . '</h' . ( 2 + $l ) .'>';
 				do_action('mbdb_book_grid_after_heading', $l, $key);
 			}
 			// because the index of the array could be a genre or series name and not a sequential index use array_keys to get the index
@@ -380,58 +517,53 @@ function mbdb_display_grid($mbdb_books, $mbdb_book_grid_cover_height, $mbdb_book
 				} else {
 					// we're at the inner most level now so we can print out the grid
 					do_action('mbdb_book_grid_before_table',  $l);
-					$content .= '<table class="mbm-book-grid-table">';
-					do_action('mbdb_book_grid_before_row',  $l);
-					$content .= '<tr class="mbm-book-grid-row">';	
-					
 					// print out each book
 					foreach($set as $book) {
-							$mbdb_bookID = $book->ID;
-							$mbdb_book_title = apply_filters('mbdb_book_grid_book_title', $book->post_title, $l);
-							$image_src = get_post_meta( $mbdb_bookID, '_mbdb_cover', true );
-							do_action('mbdb_book_grid_before_cell',  $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c );
-							$content .= '<td class="mbm-book-grid-cell" style="width:' . $width . '%;padding:15px;vertical-align:top;">';
-							do_action('mbdb_book_grid_before_link',  $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c);
-							$content .= '<A class="mbm-book-grid-title-link" HREF="' . esc_url(get_permalink($mbdb_bookID)) . '">';
-							if (isset($image_src) && $image_src != '') {
-								do_action('mbdb_book_grid_before_cover_image', $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c );
-								$content .= '<img class="mbm-book-grid-cover" src="' . esc_url($image_src) . '" style="height:' . esc_attr($mbdb_book_grid_cover_height) . 'px" /><BR> ';
-								do_action('mbdb_book_grid_after_cover_image', $content, $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c );
+						$image = get_post_meta($book->ID, '_mbdb_cover', true);
+						
+						$content .= '<span class="mbdb_float_grid">';
+						if ($image) {
+							
+							$content .= '<div class="mbdb_grid_image">';
+							$content = apply_filters('mbdb_book_grid_before_image', $content, $book->ID, $image);
+							$content .= '<a class="mbm-book-grid-title-link" href="' . esc_url(get_permalink($book->ID)) . '"><img  src="' . esc_url($image) . '"></a>';
+							$content = apply_filters('mbdb_book_grid_after_image', $content, $book->ID, $image);
+							$content .= '</div>';
+							
+						} else {
+							if (isset($coming_soon_image)) {
+								$content .= '<div class="mbdb_grid_image">';
+								$content = apply_filters('mbdb_book_grid_before_placeholder_image', $content, $book->ID, $coming_soon_image);
+								$content .= '<a class="mbm-book-grid-title-link" href="' . esc_url(get_permalink($book->ID)) . '"><img src="' . esc_url($coming_soon_image) . '"></a></div>';
+								$content = apply_filters('mbdb_book_grid_after_placeholder_image', $content, $book->ID, $coming_soon_image);
 							} else {
-								do_action('mbdb_book_grid_no_cover_image',$mbdb_bookID, $mbdb_book_title, $mbdb_book_grid_cover_height, $c);
+								$content .= '<div class="mbdb_grid_no_image">';
+								$content = apply_filters('mbdb_book_grid_no_image', $content, $book->ID);
+								$content .= '</div>';
 							}
-							do_action('mbdb_book_grid_before_book_title',  $mbdb_bookID, $mbdb_book_title);
-							$content .= '<H4 class="mbm-book-grid-title">' . esc_html($mbdb_book_title) . '</h4>';	
-							do_action('mbdb_book_grid_after_book_title',   $mbdb_bookID, $mbdb_book_title);
-							$content .= '</a>';
-							do_action('mbdb_book_grid_after_link', $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c);
-							$content .= '</td> ';
-							do_action('mbdb_book_grid_after_cell',  $mbdb_bookID, $mbdb_book_title, $image_src, $mbdb_book_grid_cover_height, $c );
-							$c++;
-							// close the row and start a new one if we've reached the number the user set
-							if ($c == $mbdb_book_grid_books_across) {
-								$content .= '</tr>';
-								do_action('mbdb_book_grid_after_row', $l);
-								do_action('mbdb_book_grid_before_row',$l);
-								$content .= '<tr>';
-								$c=0;
-							}
+						}
+					
+						
+						$content .= '<span class="mbdb_grid_title">';
+						$content = apply_filters('mbdb_book_grid_before_link', $content, $book->ID, $book->post_title);
+						$content .= '<a class="mbm-book-grid-title-link" href="' . esc_url(get_permalink($book->ID)) . '">' . esc_html($book->post_title) . '</a>';
+						$content = apply_filters('mbdb_book_grid_after_link', $content, $book->ID, $book->post_title);
+						$content .= '</span></span>';
 					}
-					$content .= '</tr>';
-					do_action('mbdb_book_grid_after_row',  $l);
-					$content .= '</table>';
-					do_action('mbdb_book_grid_after_table',  $l);
-					$c=0;
 				}
 			} else {
-				$content .= __('Books not found', 'mooberry-book-manager');
+				do_action('mbdb_book_grid_no_books_found');
+				$content = apply_filters('mbdb_book_grid_books_not_found', $content . __('Books not found', 'mooberry-book-manager'));
 			}
 		}
 	} else {
-		$content .= __('Books not found', 'mooberry-book-manager');
+		do_action('mbdb_book_grid_no_books_found');
+		$content = apply_filters('mbdb_book_grid_books_not_found', $content . __('Books not found', 'mooberry-book-manager'));
 	}
-	$content .= '</div>';
+	$content .= '</div>'; 
 	do_action('mbdb_book_grid_after_div', $l);
+	
+	
 	return apply_filters('mbdb_book_grid_table_content', $content, $l);
 }
 
@@ -443,3 +575,5 @@ function mbdb_check_grid_order( $field ) {
 	}
 	return apply_filters('mbdb_book_grid_check_grid_order', $field);
 }
+
+
