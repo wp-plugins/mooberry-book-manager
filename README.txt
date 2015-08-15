@@ -4,11 +4,11 @@ Donate link: http://www.mooberrydreams.com/
 Tags: book, author, publisher, writer, books, writing, publishing, authors, library, book store, book management
 Requires at least: 3.8.0
 Tested up to: 4.2.4
-Stable tag: 2.1
+Stable tag: 2.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-An easy-to-use system for authors. Add your new book to your site in less than 5 minutes.
+An easy-to-use system for authors. Add your new book to your site in minutes, including links for purchase or download, sidebar widgets, and more.
 
 == Description ==
 
@@ -37,11 +37,13 @@ Requires Wordpress 3.8. The admin screens (for creating books, etc.) require Jav
 Mooberry Book Manager can be translated into other languages! See `Other Notes` for more information.
 
 **Getting Started with Mooberry Book Manager**
+
 After installing and activating Mooberry Book Manager, you'll now have a Books menu.  Use that to add your books to your website.
 
 In order for your books to appear on your website, you need to add a Book Grid and/or a Widget.
 
 To Add a Book Grid:
+
 * Create a new Page or edit an existing one
 
 * Scroll down to the Book Grid Settings section
@@ -51,6 +53,7 @@ To Add a Book Grid:
 * Save the page and view it. Click on any book cover to get details of the book
 
 To Add a Widget:  
+
 * Go to Appearance -> Widget
 
 * Drag the Mooberry Book Manager Book Widget to the Widget Area of your choice
@@ -140,6 +143,13 @@ Download the [User Manual](http://www.mooberrydreams.com/support/mooberry-book-m
 5. Choose from four types of widgets to feature books on your sidebar.
 
 == Changelog ==
+= 2.2 =
+* New: Added Spanish translation
+* Fixed: Compliant with Wordpress 4.3 (and works for < Wordpress 4.3)
+* Fixed: Retailer images missing since version 2.0 restored
+* Fixed: Improved translation string for Series and Genre grids for more flexibility
+
+
 = 2.1 = 
 * New: Book Grids are now responsive
 * New: Added Serbo–Croatian translation
@@ -167,13 +177,17 @@ For revision history of older versions, please see changelog.md
 
 == Upgrade Notice ==
 
+= 2.2 =
+Updated for Wordpress 4.3!
+
 = 2.1 =
 Responsive Book Grids and more!
 
 = 2.0 =
 Redesigned, responsive book page and much more!
 
-== Translations ==
+== Other Notes ==
+= Translations =
 * English 
 
 * German  
@@ -182,6 +196,8 @@ Redesigned, responsive book page and much more!
 
 * Serbo-Croatian
 
+* Spanish
+
 **NOTE:** Mooberry Book Manager is translatable. If you'd like to volunteer a translation for your language, the template file (.pot) is available in the `languages` folder. [Contact us](http://www.mooberrydreams.com/contact/) when your translation is ready or if you need assistance.
 
 * Thanks to [Kathrin Hamann](https://profiles.wordpress.org/thrakonia) for providing the German translation!
@@ -189,3 +205,5 @@ Redesigned, responsive book page and much more!
 * Thanks to Yves for providing the French translation!
 
 * Thanks to [Web Hosting Geeks](http://www.webhostinggeeks.com/) for the Serbo-Croatian translation!
+
+* Thanks to Ana Gomez for the Spanish translation!

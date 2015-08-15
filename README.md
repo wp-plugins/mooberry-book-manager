@@ -3,7 +3,7 @@
 **Tags:** book, author, publisher, writer, books, writing, publishing, authors   
 **Requires at least:** 3.8.0  
 **Tested up to:** 4.2.4  
-**Stable tag:** 2.1  
+**Stable tag:** 2.2  
 **License:** GPLv2 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -57,6 +57,12 @@ Want regular updates?
 
 
 ## Changelog
+#### 2.2  
+* New: Added Spanish translation  
+* Fixed: Compliant with Wordpress 4.3 (and works for < Wordpress 4.3)  
+* Fixed: Retailer images missing since version 2.0 restored  
+* Fixed: Improved translation string for Series and Genre grids for more flexibility  
+
 #### 2.1 
 * New: Book Grids are now responsive  
 * New: Added Serbo–Croatian translation  
