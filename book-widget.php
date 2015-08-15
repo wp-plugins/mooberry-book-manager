@@ -4,7 +4,8 @@ class mbdb_book_widget extends WP_Widget {
 	// constructor
 	function __construct() {
 		$widget_ops = array('classname' => 'mbdb_book_widget', 'description' => __('Shows the cover of the book of your choosing with a link to the book page', 'mooberry-book-manager'));
-		parent::WP_Widget(false, $name = 'Mooberry Book Manager '. _x('Book', 'noun', 'mooberry-book-manager'), $widget_ops  );
+		//parent::WP_Widget('mbdb_book_widget', 'Mooberry Book Manager '. _x('Book', 'noun', 'mooberry-book-manager'), $widget_ops  );
+		parent::__construct('mbdb_book_widget', 'Mooberry Book Manager '. _x('Book', 'noun', 'mooberry-book-manager'), $widget_ops  );
 
 	}
 
@@ -46,7 +47,7 @@ class mbdb_book_widget extends WP_Widget {
 		}
 		$instance['mbdb_widget_cover_size'] = strip_tags($new_instance['mbdb_widget_cover_size']);
 		do_action('mbdb_widget_after_update', $new_instance, $instance);
-		return apply_filters('mbdb_widget_update', $instance);
+		return apply_filters('mbdb_widget_update', $instance, $new_instance);
 	}
 
 	// widget display
@@ -54,10 +55,11 @@ class mbdb_book_widget extends WP_Widget {
 		extract($args);
 		$mbdb_bookID  = $instance['mbdb_bookID'];
 		$mbdb_widget_type = apply_filters('mbdb_widget_type', $instance['mbdb_widget_type']);
+		do_action('mbdb_widget_before_get_books', $instance);
 		switch ($mbdb_widget_type) {
 			case 'random':
 				// get book ID of a random book
-				$mbdb_books = apply_filters('mbdb_widget_random_book_list', mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null ));
+				$mbdb_books = apply_filters('mbdb_widget_random_book_list', mbdb_get_books_list( 'all', null, 'title', 'ASC', null, null, null ));
 				if ( count($mbdb_books)>0 ) {		
 					$randomID = rand(0,count($mbdb_books)-1);
 					$mbdb_bookID = $mbdb_books[$randomID]->ID;
@@ -69,7 +71,7 @@ class mbdb_book_widget extends WP_Widget {
 				break;
 			case "newest":
 				// get book ID of most recent book
-				$mbdb_books = apply_filters('mbdb_widget_newest_book_list', mbdb_get_books_list( 'published', null, '_mbdb_published', 'DESC', null, null));
+				$mbdb_books = apply_filters('mbdb_widget_newest_book_list', mbdb_get_books_list( 'published', null, '_mbdb_published', 'DESC', null, null, null));
 				// we just need the first one
 				if (count($mbdb_books)>0) {
 					$mbdb_bookID = $mbdb_books[0]->ID;
@@ -81,7 +83,7 @@ class mbdb_book_widget extends WP_Widget {
 				break;
 			case "coming-soon":
 				// get books with future or blank release dates
-				$mbdb_books = apply_filters('mbdb_widget_coming_soon_book_list', mbdb_get_books_list('unpublished', null, '', null, null, null) );
+				$mbdb_books = apply_filters('mbdb_widget_coming_soon_book_list', mbdb_get_books_list('unpublished', null, '', null, null, null, null) );
 				// choose a random one		
 				if (count($mbdb_books) > 0) {
 					$randomID = rand(0, count($mbdb_books)-1);
@@ -94,7 +96,7 @@ class mbdb_book_widget extends WP_Widget {
 				break;
 			case "specific":
 				// make sure seected book is still a valid book
-				$mbdb_books = apply_filters('mbdb_widget_specific_book_list', mbdb_get_books_list('all', array($mbdb_bookID), '', null, null, null));
+				$mbdb_books = apply_filters('mbdb_widget_specific_book_list', mbdb_get_books_list('all', array($mbdb_bookID), '', null, null, null, null));
 				if (count($mbdb_books) > 0) {
 					$mbdb_book_title = $mbdb_books[0]->post_title;
 				} else {
@@ -112,7 +114,7 @@ class mbdb_book_widget extends WP_Widget {
 		
 		do_action('mbdb_widget_before_display');
 		echo $before_widget;
-		echo '<div>';
+		//echo '<div>';
 		echo $before_title . esc_html($mbdb_widget_title) . $after_title;
 		
 		if ($mbdb_bookID == 0) {
@@ -127,7 +129,7 @@ class mbdb_book_widget extends WP_Widget {
 			}
 			if ($image_src != '') { 
 				do_action('mbdb_widget_before_image', $image_src);
-				echo '<img class="mbm-widget-cover" style="width:' . esc_attr($mbdb_cover_size) . 'px" src="' . esc_url($image_src) . '" /> ';
+				echo '<img class="mbm-widget-cover" style="width:' . esc_attr($mbdb_cover_size) . 'px;padding-top:10px;" src="' . esc_url($image_src) . '" /> ';
 				do_action('mbdb_widget_after_image', $image_src);
 			}
 			if ($mbdb_widget_show_title == 'yes') { 
@@ -143,7 +145,8 @@ class mbdb_book_widget extends WP_Widget {
 			}
 			
 		}
-		echo '</div>' . $after_widget;
+		//echo '</div>' . 
+		echo $after_widget;
 		do_action('mbdb_widget_after_display');
 	}
 	
